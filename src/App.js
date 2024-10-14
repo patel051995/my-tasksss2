@@ -1,199 +1,156 @@
-import './App.css'
 import {Component} from 'react'
-import {v4} from 'uuid'
-
-// These are the lists used in the application. You can move them to any component needed.
+import {v4 as uuidv4} from 'uuid' // Updated import for uuid
+import Tag from './components/Tag' // Ensure this component handles tag display
+import './App.css'
 
 const tagsList = [
-  {
-    optionId: 'HEALTH',
-    displayText: 'Health',
-    isTrue: false,
-  },
-  {
-    optionId: 'EDUCATION',
-    displayText: 'Education',
-    isTrue: false,
-  },
-  {
-    optionId: 'ENTERTAINMENT',
-    displayText: 'Entertainment',
-    isTrue: false,
-  },
-  {
-    optionId: 'SPORTS',
-    displayText: 'Sports',
-    isTrue: false,
-  },
-  {
-    optionId: 'TRAVEL',
-    displayText: 'Travel',
-    isTrue: false,
-  },
-  {
-    optionId: 'OTHERS',
-    displayText: 'Others',
-    isTrue: false,
-  },
+  {optionId: 'HEALTH', displayText: 'Health'},
+  {optionId: 'EDUCATION', displayText: 'Education'},
+  {optionId: 'ENTERTAINMENT', displayText: 'Entertainment'},
+  {optionId: 'SPORTS', displayText: 'Sports'},
+  {optionId: 'TRAVEL', displayText: 'Travel'},
+  {optionId: 'OTHERS', displayText: 'Others'},
 ]
-
-// Replace your code here
-const EachTask = props => {
-  const {details} = props
-  const {task, tag} = details
-  const findItem = tagsList.find(item => item.optionId === tag)
-  return (
-    <li className="task-list-item">
-      <p className="task-para">{task}</p>
-      <p className="tag-para">{findItem.displayText}</p>
-    </li>
-  )
-}
-
-const TagItem = props => {
-  const {details, onClickTagButton} = props
-  const {displayText, optionId, isTrue} = details
-  const buttonClass = isTrue ? 'bg-button' : 'tag-button'
-  const onClickTag = () => {
-    onClickTagButton(optionId)
-  }
-  return (
-    <li>
-      <button
-        type="button"
-        className={buttonClass}
-        onClick={onClickTag}
-      ></button>
-    </li>
-  )
-}
 
 class App extends Component {
   state = {
-    task: '',
-    tag: tagList[0].optionId,
-    list: [],
-    selectTag: '',
-    newList: tagsList,
+    inputText: '',
+    inputTag: tagsList[0].optionId, // Default to the first tag
+    taskList: [],
+    activeTag: 'INITIAL',
+  }
+
+  componentDidMount() {
+    const storedTasks = localStorage.getItem('taskList')
+    if (storedTasks) {
+      this.setState({taskList: JSON.parse(storedTasks)})
+    }
+  }
+
+  onChangeInputText = event => {
+    this.setState({inputText: event.target.value})
   }
 
   onChangeSelect = event => {
-    this.setState({tag: event.target.value})
+    this.setState({inputTag: event.target.value})
   }
 
-  onChangeTask = event => {
-    this.setState({task: event.target.value})
-  }
-
-  onClickTagButton = button => {
-    const {newList} = this.state
-    const findItem = newList.find(item => item.optionId === button)
-    if (findItem.isTrue === false) {
-      const filteredList = newList.map(item => {
-        if (item.optionId === button) {
-          return {...item, isTrue: true}
-        }
-        return {...item, isTrue: false}
-      })
-      console.log(filteredList)
-      this.setState({newList: filteredList, selectTag: button})
-    }
-    if (findItem.isTrue === true) {
-      const filteredList = newList.map(item => {
-        if (item.optionId === button) {
-          return {...item, isTrue: false}
-        }
-        return item
-      })
-      console.log(filteredList)
-      this.setState({newList: filteredList, selectTag: ''})
-    }
-  }
-
-  onSubmitTask = event => {
+  submitForm = event => {
     event.preventDefault()
-    const {task, tag} = this.state
-    if (task === '') {
-      // eslint-disable-next-line no-alert
-      alert('Enter the task')
-    } else {
-      const taskValue = {
-        id: v4(),
-        task,
-        tag,
+    const {inputText, inputTag} = this.state
+
+    // Check if inputText is non-empty
+    if (inputText.trim()) {
+      const newTask = {
+        id: uuidv4(),
+        task: inputText.trim(),
+        tag: inputTag,
       }
-      this.setState(prevState => ({
-        list: [...prevState.list, taskValue],
-        task: '',
-        tag: tagsList[0].optionId,
-      }))
+
+      this.setState(prevState => {
+        const updatedTaskList = [...prevState.taskList, newTask]
+        localStorage.setItem('taskList', JSON.stringify(updatedTaskList))
+        return {
+          taskList: updatedTaskList,
+          inputText: '', // Reset input field after submission
+          inputTag: tagsList[0].optionId, // Reset tag selection to default
+        }
+      })
     }
+  }
+
+  onClickActiveTag = id => {
+    this.setState(prevState => ({
+      activeTag: prevState.activeTag === id ? 'INITIAL' : id,
+    }))
+  }
+
+  getFilteredTasks = () => {
+    const {taskList, activeTag} = this.state
+    return activeTag === 'INITIAL'
+      ? taskList
+      : taskList.filter(task => task.tag === activeTag)
   }
 
   render() {
-    const {tag, list, selectTag, task, newList} = this.state
-    const filteredList = list.filter((item = item.tag.includes(SelectTag)))
-    console.log(selectTag)
+    const {inputText, inputTag, activeTag} = this.state
+    const filteredTasks = this.getFilteredTasks()
+
     return (
-      <div className="bg-container">
-        <from className="from-container" onSubmit={this.onSubmitTask}>
-          <h1 className="heading">Create a task!</h1>
-          <div className="input-container">
-            <label htmlFor="task" className="label">
-              Task
-            </label>
-            <input
-              placeholder="Enter the task here"
-              id="task"
-              className="input"
-              value={task}
-              onChange={this.onChangeTask}
-            />
-          </div>
-          <div className="input-container">
-            <label htmlFor="tags" className="label">
-              Tags
-            </label>
-            <select
-              id="tags"
-              className="input"
-              value={tag}
-              onChange={this.onChangeSelect}
-            >
-              {tagsList.map(item => (
-                <option value={item.optionId} key={item.optionId}>
-                  {item.displayText}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" className="add-button">
-            Add Task
-          </button>
-        </from>
-        <div className="container">
-          <h1 className="tags-heading">Tags</h1>
-          <ul className="ul-container">
-            {newList.map(item => (
-              <TagItem
-                key={item.optionId}
-                details={item}
-                onClickTagButton={this.onClickTagButton}
+      <div className="main-container">
+        <div className="left-container">
+          <div className="left-inner-container">
+            <h1 className="heading">Create a task!</h1>
+            <form className="form-container" onSubmit={this.submitForm}>
+              <label htmlFor="task" className="label">
+                Task
+              </label>
+              <input
+                type="text"
+                id="task"
+                className="input-ele"
+                placeholder="Enter the task here"
+                value={inputText}
+                onChange={this.onChangeInputText}
+                required
               />
-            ))}
-          </ul>
-          <h1 className="tags-heading">Tasks</h1>
-          <ul className="task-container">
-            {filteredList.length === 0 ? (
-              <div className="no-tasks-para">
-                <p className="no-tasks-para">No Task Added Yet</p>
+              <label htmlFor="tags" className="label-tags">
+                Tags
+              </label>
+              <select
+                id="tags"
+                className="select-ele"
+                value={inputTag}
+                onChange={this.onChangeSelect}
+              >
+                {tagsList.map(tag => (
+                  <option key={tag.optionId} value={tag.optionId}>
+                    {tag.displayText}
+                  </option>
+                ))}
+              </select>
+              <button type="submit" className="add-task">
+                Add Task
+              </button>
+            </form>
+          </div>
+        </div>
+        <div className="right-container">
+          <div className="right-inner-container">
+            <h1 className="tags-heading">Tags</h1>
+            <ul className="tags-list">
+              {tagsList.map(tag => (
+                <Tag
+                  key={tag.optionId}
+                  tag={tag}
+                  onClickActiveTag={this.onClickActiveTag}
+                  isActive={activeTag === tag.optionId}
+                />
+              ))}
+            </ul>
+            <h1 className="tags-heading">Tasks</h1>
+            {filteredTasks.length === 0 ? (
+              <div className="no-task-container">
+                {activeTag === 'INITIAL' ? (
+                  <p className="no-tasks">No Tasks Added Yet</p>
+                ) : (
+                  <p className="no-tasks">{`No ${
+                    activeTag.charAt(0).toUpperCase() +
+                    activeTag.slice(1).toLowerCase()
+                  } Tasks Added Yet`}</p>
+                )}
               </div>
             ) : (
-              filteredList.map(item => (
-                <EachTask key={item.optionId} details={item} />
-              ))
+              <ul className="tasks-list">
+                {filteredTasks.map(task => (
+                  <li key={task.id}>
+                    <p>{task.task}</p> {/* Display task content */}
+                    <p>{task.tag}</p> {/* Display task tag */}
+                  </li>
+                ))}
+              </ul>
             )}
-          </ul>
+          </div>
         </div>
       </div>
     )
